@@ -1,0 +1,110 @@
+<html>
+  <head>
+    <meta charset="utf8">
+  </head>
+  <body>
+      <svg id="svg" viewBox="0 0 600 600" width="100%" height="90%" xmlns="http://www.w3.org/2000/svg"></svg>
+  </body>
+</html>
+
+<script>
+
+const NS = 'http://www.w3.org/2000/svg';
+const LEFT = 37;
+const UP = 38;
+const RIGHT = 39
+const DOWN = 40;
+    
+var x, y = 0;
+var id = 0;
+
+var ws = new WebSocket("ws://localhost:8088");
+
+ws.onopen = function (event) {
+}
+
+ws.onmessage = function (event) {
+  var data = JSON.parse(event.data);
+  if (id == 0) {
+    id = data.id;
+	  x = data.x;
+	  y = data.y;
+    createCircle(id, x, y);
+  } else {
+    var circle = document.getElementById('circle_' + data.id);
+    if (circle == null) {
+      createCircle(data.id, data.x, data.y);
+    } else {
+      circle.setAttributeNS(null, 'cx', data.x);
+      circle.setAttributeNS(null, 'cy', data.y);
+    }
+  }
+}
+
+document.addEventListener('keydown', function(event) {
+  switch(event.keyCode) {
+    case LEFT:
+      if (x > 0) x--;
+      break;
+    case RIGHT:
+      if (x < 600) x++;
+      break;
+    case UP:
+      if (y > 0) y--;
+      break;
+    case DOWN:
+      if (y < 600) y++;
+      break;
+    default:
+      break;
+  }
+  try {
+    ws.send(JSON.stringify({id: id, x: x, y: y}));
+  }
+  catch (error) {
+
+  }
+  
+});
+
+function createCircle(id, x, y) {
+  var circle = document.createElementNS(NS, "circle");
+  circle.setAttributeNS(null, 'id', 'circle_' + id);
+  circle.setAttributeNS(null, 'cx', x);
+  circle.setAttributeNS(null, 'cy', y);
+  circle.setAttributeNS(null, 'r', 30);
+  circle.setAttributeNS(null, 'fill', 'red');
+  var svg = document.getElementById('svg');
+  svg.appendChild(circle);
+}
+
+function fireKeyboardEvent(event, keycode) {
+  var keyboardEvent = document.createEventObject ?
+      document.createEventObject() : document.createEvent("Events");
+
+  if(keyboardEvent.initEvent) {
+      keyboardEvent.initEvent(event, true, true);
+  }
+
+  keyboardEvent.keyCode = keycode;
+  keyboardEvent.which = keycode;
+
+  document.dispatchEvent ? document.dispatchEvent(keyboardEvent) 
+                         : document.fireEvent(event, keyboardEvent);
+}
+
+setInterval(function () {
+  var e = new Event("keydown");
+  var keyCode = Math.random() * 100 % 4 + LEFT;
+  keyCode = parseInt(keyCode);
+  e.key = keyCode;
+  e.keyCode = keyCode;
+  e.which = e.keyCode;
+  e.altKey = false;
+  e.ctrlKey = false;
+  e.shiftKey = false;
+  e.metaKey = false;
+  e.bubbles = false;
+  document.dispatchEvent(e);
+}, 200);
+</script>
